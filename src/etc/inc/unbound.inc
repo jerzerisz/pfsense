@@ -418,9 +418,9 @@ EOD;
 			}
 		}
 
-	} else {
+	} elseif (isset($unboundcfg['regdhcp'])) {
 		$dhcp_lease_registration .=<<<EOD
-# regenerate following file and restart
+# the following file gets regenerated and unbound reloads/restart on new DHCP lease
 include: {$g['unbound_chroot_path']}{$cfgsubdir}/dhcpleases_entries.conf
 EOD;
 	}

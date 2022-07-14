@@ -460,7 +460,8 @@ $section->addInput(new Form_Checkbox(
 	null,
 	'Use SSL/TLS for outgoing DNS Queries to Forwarding Servers',
 	$pconfig['forward_tls_upstream']
-))->setHelp('When set in conjunction with DNS Query Forwarding, queries to all upstream forwarding DNS servers will be sent using SSL/TLS on the default port of 853. Note that ALL configured forwarding servers MUST support SSL/TLS queries on port 853.');
+))->setHelp('When set in conjunction with DNS Query Forwarding, queries to all upstream forwarding DNS servers will be sent using SSL/TLS on the default port of 853. '.
+		'<br>Note: ALL configured forwarding servers MUST support SSL/TLS queries on port 853.');
 
 $section->addInput(new Form_Checkbox(
 	'regdhcp',
@@ -469,28 +470,29 @@ $section->addInput(new Form_Checkbox(
 	$pconfig['regdhcp']
 ))->setHelp('If this option is set, then machines that specify their hostname when requesting an IPv4 DHCP lease will be registered '.
 		'in the DNS Resolver so that their name can be resolved.'.
-		'<br>Note: this may cause the Resolver to reload and flush its resolution cache whenever a DHCP lease is issued. '.
-		'The domain in %1$sSystem &gt; General Setup%2$s should also be set to the proper value.','<a href="system.php">','</a>');
+		'<br>Note: This will cause the Resolver to reload and flush its resolution cache whenever a DHCP lease is issued. '.
+		'<br>Note: The domain in %1$sSystem &gt; General Setup%2$s should be set to the proper value.','<a href="system.php">','</a>');
 
 $section->addInput(new Form_Checkbox(
 	'dhcpview',
 	'unbound-control DHCP Lease Registration',
-	'Register DHCP Leases with unbound-control',
+	'Register DHCP leases with unbound-control',
 	$pconfig['dhcpview']
 ))->setHelp('If this option is set, then machines that specify their hostname when requesting an IPv4 DHCP lease will be registered '.
 		'in the DNS Resolver with unbound-control so that their name can be resolved.'.
-		'<br>Note: Does not require the Resolver to reload and flush its resolution cache whenever a DHCP lease is issued.'.
-		'<br>Note: The domain in %1$sSystem &gt; General Setup%2$s should be set to the proper value.','<a href="system.php">','</a>');
+		'<br>Note: Does not cause the Resolver to reload and flush its resolution cache whenever a DHCP lease is issued.'.
+		'<br>Note: The domain in %1$sSystem &gt; General Setup%2$s should be set to the proper value.'.
+		'<br>Note: This option overrides DHCP Registration behavior.','<a href="system.php">','</a>');
 
 
 $dhcpviewiflist = build_if_list($pconfig['dhcpview_interface']);
 $section->addInput(new Form_Select(
 	'dhcpview_interface',
-	'*DHCP leases Interfaces',
+	'*DHCP Leases Interfaces',
 	$dhcpviewiflist['selected'],
 	$dhcpviewiflist['options'],
 	true
-))->setHelp('Interfaces allowed by the DNS Resolver to responding to queries for DHCP Leases. Queries for DHCP Leases to other interface IPs not selected below are discarded.');
+))->setHelp('Interfaces allowed by the DNS Resolver to responding to queries for DHCP leases. Queries for DHCP leases to other interface IPs not selected are discarded.');
 
 $section->addInput(new Form_Checkbox(
 	'regdhcpstatic',
@@ -498,7 +500,7 @@ $section->addInput(new Form_Checkbox(
 	'Register DHCP static mappings in the DNS Resolver',
 	$pconfig['regdhcpstatic']
 ))->setHelp('If this option is set, then DHCP static mappings will be registered in the DNS Resolver, so that their name can be resolved. '.
-					'The domain in %1$sSystem &gt; General Setup%2$s should also be set to the proper value.','<a href="system.php">','</a>');
+		'<br>Note: The domain in %1$sSystem &gt; General Setup%2$s should be set to the proper value.','<a href="system.php">','</a>');
 
 $section->addInput(new Form_Checkbox(
 	'regovpnclients',
