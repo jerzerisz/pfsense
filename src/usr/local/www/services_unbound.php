@@ -64,6 +64,9 @@ if (isset($a_unboundcfg['forward_tls_upstream'])) {
 if (isset($a_unboundcfg['regdhcp'])) {
 	$pconfig['regdhcp'] = true;
 }
+if (isset($a_unboundcfg['dhcpview'])) {
+	$pconfig['dhcpview'] = true;
+}
 if (isset($a_unboundcfg['regdhcpstatic'])) {
 	$pconfig['regdhcpstatic'] = true;
 }
@@ -88,6 +91,12 @@ if (empty($a_unboundcfg['outgoing_interface'])) {
 	$pconfig['outgoing_interface'] = array();
 } else {
 	$pconfig['outgoing_interface'] = explode(",", $a_unboundcfg['outgoing_interface']);
+}
+
+if (empty($a_unboundcfg['dhcpview_interface'])) {
+	$pconfig['dhcpview_interface'] = array();
+} else {
+	$pconfig['dhcpview_interface'] = explode(",", $a_unboundcfg['dhcpview_interface']);
 }
 
 if (empty($a_unboundcfg['system_domain_local_zone_type'])) {
@@ -183,6 +192,11 @@ if ($_POST['save']) {
 		$pconfig['outgoing_interface'] = implode(",", $pconfig['outgoing_interface']);
 	}
 
+	if (is_array($pconfig['dhcpview_interface']) && !empty($pconfig['dhcpview_interface'])) {
+		$display_dhcpview_interface = $pconfig['dhcpview_interface'];
+		$pconfig['dhcpview_interface'] = implode(",", $pconfig['dhcpview_interface']);
+	}
+
 	$test_output = array();
 	if (test_unbound_config($pconfig, $test_output)) {
 		$input_errors[] = gettext("The generated config file cannot be parsed by unbound. Please correct the following errors:");
@@ -214,6 +228,8 @@ if ($_POST['save']) {
 		$a_unboundcfg['forwarding'] = isset($pconfig['forwarding']);
 		$a_unboundcfg['forward_tls_upstream'] = isset($pconfig['forward_tls_upstream']);
 		$a_unboundcfg['regdhcp'] = isset($pconfig['regdhcp']);
+		$a_unboundcfg['dhcpview'] = isset($pconfig['dhcpview']);
+		$a_unboundcfg['dhcpview_interface'] = $pconfig['dhcpview_interface'];
 		$a_unboundcfg['regdhcpstatic'] = isset($pconfig['regdhcpstatic']);
 		$a_unboundcfg['regovpnclients'] = isset($pconfig['regovpnclients']);
 		$a_unboundcfg['active_interface'] = $pconfig['active_interface'];
@@ -227,6 +243,7 @@ if ($_POST['save']) {
 
 	$pconfig['active_interface'] = $display_active_interface;
 	$pconfig['outgoing_interface'] = $display_outgoing_interface;
+	$pconfig['dhcpview_interface'] = $display_dhcpview_interface;
 	$pconfig['custom_options'] = $display_custom_options;
 }
 
@@ -433,10 +450,10 @@ $section->addInput(new Form_Checkbox(
 	'DNS Query Forwarding',
 	'Enable Forwarding Mode',
 	$pconfig['forwarding']
-))->setHelp('If this option is set, DNS queries will be forwarded to the upstream DNS servers defined under'.
-					' %1$sSystem &gt; General Setup%2$s or those obtained via dynamic ' .
-					'interfaces such as DHCP, PPP, or OpenVPN (if DNS Server Override ' .
-				        'is enabled there).','<a href="system.php">','</a>');
+))->setHelp('If this option is set, DNS queries will be forwarded to the upstream DNS servers defined under '.
+	'%1$sSystem &gt; General Setup%2$s or those obtained via dynamic ' .
+	'interfaces such as DHCP, PPP, or OpenVPN (if DNS Server Override ' .
+	'is enabled there).','<a href="system.php">','</a>');
 
 $section->addInput(new Form_Checkbox(
 	'forward_tls_upstream',
@@ -450,10 +467,30 @@ $section->addInput(new Form_Checkbox(
 	'DHCP Registration',
 	'Register DHCP leases in the DNS Resolver',
 	$pconfig['regdhcp']
-))->setHelp('If this option is set, then machines that specify their hostname when requesting an IPv4 DHCP lease will be registered'.
-					' in the DNS Resolver so that their name can be resolved.'.
-	    				' Note that this will cause the Resolver to reload and flush its resolution cache whenever a DHCP lease is issued.'.
-					' The domain in %1$sSystem &gt; General Setup%2$s should also be set to the proper value.','<a href="system.php">','</a>');
+))->setHelp('If this option is set, then machines that specify their hostname when requesting an IPv4 DHCP lease will be registered '.
+		'in the DNS Resolver so that their name can be resolved.'.
+		'<br>Note: this may cause the Resolver to reload and flush its resolution cache whenever a DHCP lease is issued. '.
+		'The domain in %1$sSystem &gt; General Setup%2$s should also be set to the proper value.','<a href="system.php">','</a>');
+
+$section->addInput(new Form_Checkbox(
+	'dhcpview',
+	'unbound-control DHCP Lease Registration',
+	'Register DHCP Leases with unbound-control',
+	$pconfig['dhcpview']
+))->setHelp('If this option is set, then machines that specify their hostname when requesting an IPv4 DHCP lease will be registered '.
+		'in the DNS Resolver with unbound-control so that their name can be resolved.'.
+		'<br>Note: Does not require the Resolver to reload and flush its resolution cache whenever a DHCP lease is issued.'.
+		'<br>Note: The domain in %1$sSystem &gt; General Setup%2$s should be set to the proper value.','<a href="system.php">','</a>');
+
+
+$dhcpviewiflist = build_if_list($pconfig['dhcpview_interface']);
+$section->addInput(new Form_Select(
+	'dhcpview_interface',
+	'*DHCP leases Interfaces',
+	$dhcpviewiflist['selected'],
+	$dhcpviewiflist['options'],
+	true
+))->setHelp('Interfaces allowed by the DNS Resolver to responding to queries for DHCP Leases. Queries for DHCP Leases to other interface IPs not selected below are discarded.');
 
 $section->addInput(new Form_Checkbox(
 	'regdhcpstatic',

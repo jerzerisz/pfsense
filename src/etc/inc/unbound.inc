@@ -399,6 +399,33 @@ EOF;
 	$verbosity = isset($unboundcfg['log_verbosity']) ? $unboundcfg['log_verbosity'] : 1;
 	$use_caps = isset($unboundcfg['use_caps']) ? "yes" : "no";
 
+	if (isset($unboundcfg['dhcpview'])) {
+		$dhcp_lease_registration .=<<<EOD
+# utilize unbound-control
+view:
+    name: dhcpleases
+
+EOD;
+		$dhcpview_interface = explode(",", $unboundcfg['dhcpview_interface']);
+		if (empty($unboundcfg['dhcpview_interface']) || in_array("all", $dhcpview_interface, true)) {
+			$dhcpview_interface = explode(",", $unboundcfg['active_interfaces']);
+		}
+		foreach ($dhcpview_interface as $ubif) {
+			if (in_array($ubif, $active_interfaces, true)) {
+				$access_control_view .= "\taccess-control-view: " .get_interface_ip($ubif). "/" .get_interface_subnet($ubif). " dhcpleases\n";
+			} else {
+				$access_control_view .= "#\taccess-control-view: " .get_interface_ip($ubif). "/" .get_interface_subnet($ubif). " dhcpleases # not in active interface list\n";
+			}
+		}
+
+	} else {
+		$dhcp_lease_registration .=<<<EOD
+# regenerate following file and restart
+include: {$g['unbound_chroot_path']}{$cfgsubdir}/dhcpleases_entries.conf
+EOD;
+	}
+
+
 	if (isset($unboundcfg['regovpnclients'])) {
 		$openvpn_clients_conf .=<<<EOD
 # OpenVPN client entries
@@ -482,6 +509,7 @@ EOD;
 # Server configuration
 ##
 server:
+{$access_control_view}
 {$reverse_zones}
 chroot: {$g['unbound_chroot_path']}
 username: "unbound"
@@ -545,8 +573,8 @@ include: {$g['unbound_chroot_path']}{$cfgsubdir}/access_lists.conf
 # Static host entries
 include: {$g['unbound_chroot_path']}{$cfgsubdir}/host_entries.conf
 
-# dhcp lease entries
-include: {$g['unbound_chroot_path']}{$cfgsubdir}/dhcpleases_entries.conf
+# DHCP lease entries
+{$dhcp_lease_registration}
 
 {$openvpn_clients_conf}
 
